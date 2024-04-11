@@ -52,10 +52,23 @@ services:
       - "--providers.file.watch=true"
       - "--experimental.plugins.keycloakopenid.modulename=github.com/Gwojda/keycloakopenid"
       - "--experimental.plugins.keycloakopenid.version=v0.1.35"
+      - "--certificatesresolvers.letsencrypt-dns-challenge.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt-dns-challenge.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.letsencrypt-dns-challenge.acme.dnschallenge.resolvers=1.1.1.1:53"
+      - "--certificatesresolvers.letsencrypt-dns-challenge.acme.email=some-email@domain.tld"
+      - "--certificatesresolvers.letsencrypt-dns-challenge.acme.storage=/letsencrypt/acme.json"
     ports:  
       - 80:80
       - 443:443
     volumes:
       - ./traefik_data/:/etc/traefik
+      - ./traefik_letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock
-    
+    labels:
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt-dns-challenge"
+      - "traefik.http.routers.api.tls.domains[0].main=domain.tld"
+      - "traefik.http.routers.api.tls.domains[0].sans=*.domain.tld"
+    environment:
+      - "TZ=YOUR/TIMEZONE"
+      - "CF_ZONE_API_TOKEN=YOUR-CLOUDFLARE-ZONE-API-TOKEN"
+      - "CF_DNS_API_TOKEN=YOUR-CLOUDFLARE-DNS-API-TOKEN"
