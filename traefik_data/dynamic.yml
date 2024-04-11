@@ -1,0 +1,25 @@
+http:
+  middlewares:
+    keycloak-middleware-name:
+      plugin:
+        keycloakopenid:
+          ClientID: client-id
+          ClientSecret: client-secret
+          KeycloakRealm: realm-name
+          KeycloakURL: https://keycloak.domain.tld
+          Scope: openid
+          TokenCookieName: some-cookie-name
+          UseAuthHeader: "false"
+  routers:
+    demo-service:
+      rule: "Host(`service.domain.tld`)"
+      service: "sample-service"
+      entryPoints:
+        - "https"
+      middlewares:
+        - "keycloak-middleware-name"
+  services:
+    sample-service:
+      loadBalancer:
+        servers:
+          - url: "http://10.0.0.1:80"
