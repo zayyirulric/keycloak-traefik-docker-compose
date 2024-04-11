@@ -4,22 +4,35 @@ http:
       plugin:
         keycloakopenid:
           ClientID: client-id
-          ClientSecret: client-secret
+          ClientSecret: 9hgiD90dbqk54apjUl5LxAEDOkhZ80yB
           KeycloakRealm: realm-name
-          KeycloakURL: https://keycloak.domain.tld
+          KeycloakURL: https://keycloak.domain.tld            
           Scope: openid
           TokenCookieName: some-cookie-name
           UseAuthHeader: "false"
   routers:
-    demo-service:
+    demo-service-route:
       rule: "Host(`service.domain.tld`)"
       service: "sample-service"
       entryPoints:
         - "https"
       middlewares:
         - "keycloak-middleware-name"
+      tls:
+        - certResolver: "letsencrypt-dns-challenge"
+    keycloak-public-route:
+      rule: "Host(`keycloak.domain.tld`)"
+      service: "keycloak-server"
+      entryPoints:
+        - "https"
+      tls:
+        - certResolver: "letsencrypt-dns-challenge"
   services:
     sample-service:
       loadBalancer:
         servers:
           - url: "http://10.0.0.1:80"
+    keycloak-server:
+      loadBalancer:
+        servers:
+          - url: "http://10.0.0.1:8081"
