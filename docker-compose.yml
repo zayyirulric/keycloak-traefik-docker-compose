@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: keycloak-postgres
+    image: postgres:latest
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: dbUSER
+      POSTGRES_PASSWORD: dbPASS
+      
+  keycloak:
+    container_name: keycloak-server
+    image: quay.io/keycloak/keycloak:latest
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_PASSWORD: dbUSER
+      KC_DB_USERNAME: dbPASS
+      KC_DB_SCHEMA: public
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PROXY_ADDRESS_FORWARDING: true
+      KC_METRICS_ENABLED: true
+      KC_PROXY: edge
+    volumes:
+      - ./keycloak_data:/data:rw
+    ports:
+      - 8081:8080
+    depends_on:
+      - postgres
+      
+  traefik:
+    restart: always
+    image: traefik:latest
+    command:
+      - "--log.level=DEBUG"
+      - "--api.dashboard=true"
+      - "--api.debug=true"
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--log=true"
+      - "--log.filepath=/etc/traefik/traefik.log"
+      - "--providers.file=true"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--experimental.plugins.keycloakopenid.modulename=github.com/Gwojda/keycloakopenid"
+      - "--experimental.plugins.keycloakopenid.version=v0.1.35"
+    ports:  
+      - 80:80
+      - 443:443
+    volumes:
+      - ./traefik_data/:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock
+    
